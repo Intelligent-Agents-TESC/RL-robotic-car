@@ -253,30 +253,30 @@ if __name__ == '__main__':
             l_bump = int(data_list[4])
             r_bump = int(data_list[5])
 
-            xp[0] = get_photo_i(avg_photo)
-            xp[1] = get_temp_i(temp)
-            xp[2] = get_echo_i(uss)
-            xp[3] = int(l_bump | r_bump)
+            x[0] = get_photo_i(avg_photo)
+            x[1] = get_temp_i(temp)
+            x[2] = get_echo_i(uss)
+            x[3] = int(l_bump | r_bump)
             print('xp: {}'.format(xp))
 
-            # generalize
-            for i in range(tile_num):
-                rand = np.random.randint(-1, 2)
-                gen_xp_i[i, 0] = get_photo_i(bound_photo(avg_photo + (photo_unit * rand)))
-                rand = np.random.randint(-1, 2)
-                gen_xp_i[i, 1] = get_temp_i(bound_temp(temp + (temp_unit * rand)))
-                rand = np.random.randint(-1, 2)
-                gen_xp_i[i, 2] = get_echo_i(bound_uss(uss + (uss_unit * rand)))
-                gen_xp_i[i, 3] = xp[3]
-
-            # collect reward
+                        # collect reward
             r = get_reward(temp, bool(xp[3]))
             avg_r += r
             td_err = r
 
+            # generalize
             for i in range(tile_num):
+                rand = np.random.randint(-1, 2)
+                gen_x_i[i, 0] = get_photo_i(bound_photo(avg_photo + (photo_unit * rand)))
+                rand = np.random.randint(-1, 2)
+                gen_x_i[i, 1] = get_temp_i(bound_temp(temp + (temp_unit * rand)))
+                rand = np.random.randint(-1, 2)
+                gen_x_i[i, 2] = get_echo_i(bound_uss(uss + (uss_unit * rand)))
+                gen_x_i[i, 3] = xp[3]
+                
                 td_err -= w[i, gen_x_i[i, 0], gen_x_i[i, 1], gen_x_i[i, 2], gen_x_i[i, 3], a]
                 z[i, gen_x_i[i, 0], gen_x_i[i, 1], gen_x_i[i, 2], gen_x_i[i, 3], a] += 1
+
 
             # find action with the highest value for these features
             rand = random.random()
@@ -300,20 +300,13 @@ if __name__ == '__main__':
             serial.reset_input_buffer()
 
             for i in range(tile_num):
-                td_err += gamma * w[i, gen_xp_i[i, 0], gen_xp_i[i, 1], gen_xp_i[i, 2], gen_xp_i[i, 3], ap]
+                td_err += gamma * w[i, gen_x_i[i, 0], gen_x_i[i, 1], gen_x_i[i, 2], gen_x_i[i, 3], ap]
 
             # update weight vector for last time step
             w += alpha * td_err * z
             z = gamma * lambda_decay * z
 
             avg_td_err += td_err
-
-            # plot tde
-            y_tde[-1] = td_err
-            y_r[-1] = r
-            live_line_tde, live_line_r = live_plotter(x_common, y_tde, live_line_tde, y_r, live_line_r)
-            y_tde = np.append(y_tde[1:], 0.0)
-            y_r = np.append(y_r[1:], 0.0)
 
             # document average TD errors and reward per 10 steps
             if t % 10 == 0 and t != 0:
@@ -329,10 +322,7 @@ if __name__ == '__main__':
                 print('t: {}'.format(t))
                 print(
                     '\n\n\nmemory stored ---------------------------------------------------------------------------------\n\n\n')
-
-            gen_x_i = gen_xp_i
-            x = xp
-            q = qp
+                    
             a = ap
             t += 1
 
