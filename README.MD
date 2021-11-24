@@ -35,7 +35,7 @@ An hexagonal, walled enclosure was built to contain the robotic agent to an area
 This code base shows a solution to the problem using a value-based, custom method that is built on Sarsa(λ). Pseudocode for the computer and the microcontroler below gives an overview of the learning process. 
 
 Pseudocode for the Computer:
-
+```
 Input: a function F(s, a) returning the indices of active features for s, a Input: a epsilon-greedy policy π
 Algorithm parameters: step size α > 0, trace decay rate λ ∈ [ 0, 1] Initialize:
 w = ( w1, ..., wd )T ∈ Rd ( e.g. w = 0 ) z = ( z1, ..., zd )T ∈ Rd ( e.g. z = 0 )
@@ -58,14 +58,15 @@ Loop forever:
         If t % 500 == 0:
             Store w and z into memory z=γ*λ*z
         S = S’, A = A’ t += 1
-
+```
 Pseudocode for the Microcontroller:
+```
 Gather sensory data
 Transmit sensory data to the Computer 
 While no instruction from the Computer:
     wait
 Take action A as instructed
-
+```
 
 The code examples below are taken from the small-feature-space version for simplicity. We will highlight the different techniques used to construct this solution and how they help solve the problem.
 
