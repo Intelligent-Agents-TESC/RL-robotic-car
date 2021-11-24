@@ -18,16 +18,16 @@ There are 2 key challenges in this learning task:
 
 ## Robotic Car Setup
 
-![robot-setup-diagram](/img/robot-set-up-diagram)
+![robot-setup-diagram](/sarsa-lambda/img/robot-set-up-diagram)
 <br>
-![Robotic agent top view](/img/robot-top.jpeg)
-![Robotic agent side view](/img/robot-side.jpeg) 
+![Robotic agent top view](/sarsa-lambda/img/robot-top.jpeg)
+![Robotic agent side view](/sarsa-lambda/img/robot-side.jpeg) 
 
 The robot is a portable computer (Pi 3 Model B) that communicates with a microcontroller (Arduino Uno). The microcontroller collects data from an array of sensors to send to the computer. The computer then computes the current state and action values, and instructs the microcontroller to take an action (by driving the motors) on each time step. 
 
 ## Environment Setup
 
-![Arena for experiment](/img/arena.jpeg)
+![Arena for experiment](/sarsa-lambda/img/arena.jpeg)
 
 An hexagonal, walled enclosure was built to contain the robotic agent to an area, the walls ensure that the switches at the front of the robot is triggered whenever there is a collision. The enclosure is about 8 feet wide corner to corner. A heat lamp radiates light and heat towards the center of the enclosure.
 
