@@ -18,16 +18,14 @@ There are 2 key challenges in this learning task:
 
 ## Robotic Car Setup
 
-<img src="https://github.com/Intelligent-Agents-TESC/RL-robotic-car/tree/main/sarsa-lambda/img/robot-set-up-diagram.png" width="400" height="auto">
-<br>
-<img src="https://github.com/Intelligent-Agents-TESC/RL-robotic-car/tree/main/sarsa-lambda/img/robot-top.jpeg" width="400" height="auto">
-<img src="https://github.com/Intelligent-Agents-TESC/RL-robotic-car/tree/main/sarsa-lambda/img/robot-side.jpeg" width="400" height="auto">
+<img src="https://github.com/Intelligent-Agents-TESC/RL-robotic-car/blob/main/sarsa-lambda/img/robot-set-up-diagram.png" width="400" height="auto">
+<img src="https://github.com/Intelligent-Agents-TESC/RL-robotic-car/blob/main/sarsa-lambda/img/robot-top.jpeg" width="400" height="auto"><img src="https://github.com/Intelligent-Agents-TESC/RL-robotic-car/blob/main/sarsa-lambda/img/robot-side.jpeg" width="400" height="auto">
 
 The robot is a portable computer (Pi 3 Model B) that communicates with a microcontroller (Arduino Uno). The microcontroller collects data from an array of sensors to send to the computer. The computer then computes the current state and action values, and instructs the microcontroller to take an action (by driving the motors) on each time step. 
 
 ## Environment Setup
 
-<img src="https://github.com/Intelligent-Agents-TESC/RL-robotic-car/tree/main/sarsa-lambda/img/arena.jpeg" width="400" height="auto">
+<img src="https://github.com/Intelligent-Agents-TESC/RL-robotic-car/blob/main/sarsa-lambda/img/arena.jpeg" width="400" height="auto">
 
 An hexagonal, walled enclosure was built to contain the robotic agent to an area, the walls ensure that the switches at the front of the robot is triggered whenever there is a collision. The enclosure is about 8 feet wide corner to corner. A heat lamp radiates light and heat towards the center of the enclosure.
 
