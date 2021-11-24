@@ -32,7 +32,42 @@ The robot is a portable computer (Pi 3 Model B) that communicates with a microco
 An hexagonal, walled enclosure was built to contain the robotic agent to an area, the walls ensure that the switches at the front of the robot is triggered whenever there is a collision. The enclosure is about 8 feet wide corner to corner. A heat lamp radiates light and heat towards the center of the enclosure.
 
 ## Methodology
-This code base shows a solution to the problem using a value-based, custom method that is built on Sarsa(λ). We will highlight the different techniques used to construct this solution and how they help solve the problem. The code examples below are taken from the small-feature-space version for simplicity.
+This code base shows a solution to the problem using a value-based, custom method that is built on Sarsa(λ). Pseudocode for the computer and the microcontroler below gives an overview of the learning process. 
+
+Pseudocode for the Computer:
+
+Input: a function F(s, a) returning the indices of active features for s, a Input: a epsilon-greedy policy π
+Algorithm parameters: step size α > 0, trace decay rate λ ∈ [ 0, 1] Initialize:
+w = ( w1, ..., wd )T ∈ Rd ( e.g. w = 0 ) z = ( z1, ..., zd )T ∈ Rd ( e.g. z = 0 )
+Initialize S
+z = 0 or load from memory w = 0 or load from memory
+choose A ~ max ˆq( S, • , w ) t =0
+Loop forever:
+    Loop for each step:
+        Instruct microcontroller to take action A
+        while no feedback from microcontroller: 
+            wait
+        Observe R, S’ from feedback δ= R
+        Loop for i in F(S, A):
+            δ = δ - wi
+            zi = zi + 1
+        Choose A’ ~ max ˆq( S’, • , w )
+        Loop for i in F(s’, a’):
+            δ = δ + ( γ * wi )
+        w = w + ( α * δ * z ) 
+        If t % 500 == 0:
+            Store w and z into memory z=γ*λ*z
+        S = S’, A = A’ t += 1
+
+Pseudocode for the Microcontroller:
+Gather sensory data
+Transmit sensory data to the Computer 
+While no instruction from the Computer:
+    wait
+Take action A as instructed
+
+
+The code examples below are taken from the small-feature-space version for simplicity. We will highlight the different techniques used to construct this solution and how they help solve the problem.
 
 - Function approximation
     - Provides a statistical framework of representation for the sample data collected during a trial. We can use function approximation algorithms such as Sarsa(λ) to generalize neighboring states and actions to predict the value of actions in an unfamiliar state. 
