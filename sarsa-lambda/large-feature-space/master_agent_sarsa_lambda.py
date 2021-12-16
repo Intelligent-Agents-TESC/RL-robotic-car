@@ -94,11 +94,7 @@ def read_from_memory(_mode, _ndarray):
         return updated_ndarray
 
 def get_bumper_state(_l, _r):
-    if _l and _r:
-        return 3
-    elif _r:
-        return 2
-    elif _l:
+    if _l or _r:
         return 1
     return 0
 
@@ -117,21 +113,50 @@ def bound_uss_data(_data):
     _data = 2.0 if _data < 2.0 else _data
     return _data
 
+def generalize(_gen_x_i, _i, _l_photo, _r_photo, _temp, _uss30, _uss90, _uss135, _x):
+
+    rand = np.random.randint(-1, 2)
+    _gen_x_i[i, 0] = math.floor(bound_photo_data(_l_photo + (photo_unit * rand)) / 511.50 * 15.0)
+
+    rand = np.random.randint(-1, 2)
+    _gen_x_i[i, 1] = math.floor(bound_photo_data(_r_photo + (photo_unit * rand)) / 511.50 * 15.0)
+
+    _gen_x_i[i, 2] = _x[2]
+
+    rand = np.random.randint(-1, 2)
+    _gen_x_i[i, 3] = math.floor(((bound_temp_data(_temp + (temp_unit * rand)) - 20.0) / 10.0) * 15.0)
+
+    _gen_x_i[i, 4] = _x[4]
+
+    rand = np.random.randint(-1, 2)
+    _gen_x_i[i, 5] = get_echo_index(bound_uss_data(_uss30 + (uss_unit * rand)))
+
+    rand = np.random.randint(-1, 2)
+    _gen_x_i[i, 6] = get_echo_index(bound_uss_data(_uss90 + (uss_unit * rand)))
+
+    rand = np.random.randint(-1, 2)
+    _gen_x_i[i, 7] = get_echo_index(bound_uss_data(_uss135 + (uss_unit * rand)))
+
+    _gen_x_i[i, 8] = _x[8]
+
+    return _gen_x_i
+
+
 if __name__ == '__main__':
 
-    feature_num = 7
+    feature_num = 9
     action_num = 5
-    tile_num = 4
+    tile_num = 16
 
     print_mode = True
 
-    # w = [tilings][left photo][right photo][photo roc][temp][temp roc][sonic 90][bumper][action-num]
-    #         4         15           15          2       15       2        5         4        5
-    w = np.zeros((tile_num, 15, 15, 2, 15, 2, 5, 4, action_num))
+    # w = [tilings][left photo][right photo][photo roc][temp][temp roc][sonic 90][sonic 45][sonic 135][bumper][action-num]
+    #         4         15           15          2       15       2        5         5         5          4        5
+    w = np.zeros((tile_num, 15, 15, 2, 15, 2, 5, 5, 5, 2, action_num))
     # or load from memory
     # w = read_from_memory(True, w)
 
-    z = np.zeros((tile_num, 15, 15, 2, 15, 2, 5, 4, action_num))
+    z = np.zeros((tile_num, 15, 15, 2, 15, 2, 5, 5, 5, 2, action_num))
     # or load from memory
     # z = read_from_memory(False, z)
 
@@ -153,8 +178,6 @@ if __name__ == '__main__':
     gen_x_i = np.zeros((tile_num, feature_num), dtype=int)
     gen_xp_i = np.zeros((tile_num, feature_num), dtype=int)
 
-    arbitrary_x = np.array([4, 4, 1, 4, 1, 4, 0, 4])
-
     photo_record = np.zeros(3)
     temp_record = np.zeros(3)
 
@@ -168,10 +191,22 @@ if __name__ == '__main__':
     # initialize data records
     for i in range(3):
 
+        # no movement and no vector updates yet.
+        # take a random action to init.
+        a = np.random.randint(action_num)
+        transmit_action = str(a) + '\n'
+        serial.write(transmit_action.encode('utf-8'))
+        serial.flush()
+        serial.reset_input_buffer()
+
         while serial.in_waiting <= 5:
             continue
 
         data_list = byte_data_to_list()
+        
+        if print_mode:
+            print('--------------------------------------------------------\n\nt = {}'.format(t))
+            print(data_list)
 
         l_photo = data_list[0]
         r_photo = data_list[1]
@@ -187,31 +222,39 @@ if __name__ == '__main__':
 
         if i == 2:
 
-            watch30 = data_list[3]
-            watch135 = data_list[4]
-            watch90 = data_list[5]
-            uss = bound_uss_data((watch90 * 0.5) + (watch30 * 0.25) + (watch135 * 0.25))
+            uss30 = bound_uss_data(data_list[3])
+            uss135 = bound_uss_data(data_list[4])
+            uss90 = bound_uss_data(data_list[5])
 
             x[0] = math.floor((l_photo / 511.50) * 15.0)
             x[1] = math.floor((r_photo / 511.50) * 15.0)
             x[2] = get_roc(avg_photo, photo_record, 0)
             x[3] = math.floor(((temp - 20.0) / 10.0) * 15.0)
             x[4] = get_roc(temp, temp_record, 1)
-            x[5] = math.floor(((uss - 2.0) / 100.0) * 5.0)
-            x[6] = get_bumper_state(l_bump, r_bump)
+            x[5] = get_echo_index(uss30)
+            x[6] = get_echo_index(uss90)
+            x[7] = get_echo_index(uss135)
+            x[8] = get_bumper_state(l_bump, r_bump)
+            
+            if print_mode:
+
+                print('received data:   {}\n'.format(data_list))
+
+                print('light:           {}'.format(avg_photo))
+                print('temp:            {}'.format(temp))
+                print('obstacles:       {} cm at 30, {} cm at 90, {} cm at 135'.format(uss30, uss90, uss135))
+                print('collision:       {}\n'.format((l_bump | r_bump)))
+
+                print('feature:         {}'.format(x))
+
+            for i in range(tile_num):
+                gen_x_i = generalize(gen_x_i, i, r_photo, r_photo, temp, uss30, uss90, uss135, x)
 
         update_record(photo_record, avg_photo)
         update_record(temp_record, temp)
 
-        # no movement and no vector updates during init.
-        transmit_action = str(6) + '\n'
-        serial.write(transmit_action.encode('utf-8'))
-        serial.flush()
-        serial.reset_input_buffer()
-
+    a = np.random.randint(action_num)
     while True:
-
-        if serial.in_waiting > 5:
 
             if print_mode: print("Take action -> {}\n\n".format(action_dict.get(a, '???')))
 
@@ -225,11 +268,12 @@ if __name__ == '__main__':
                 continue
 
             # observe S
-            if print_mode: print('--------------------------------------------------------\n\nt = {}'.format(t))
             data_list = byte_data_to_list()
-            if print_mode: print(data_list)
 
-            # process incoming data
+            if print_mode:
+                print('--------------------------------------------------------\n\nt = {}'.format(t))
+                print(data_list)
+
             l_photo = data_list[0]
             r_photo = data_list[1]
             l_photo = bound_photo_data(l_photo)
@@ -239,10 +283,9 @@ if __name__ == '__main__':
             temp = data_list[2]
             temp = bound_temp_data(temp)
 
-            watch30 = data_list[3]
-            watch135 = data_list[4]
-            watch90 = data_list[5]
-            uss = bound_uss_data((watch90 * 0.5) + (watch30 * 0.25) + (watch135 * 0.25))
+            uss30 = bound_uss_data(data_list[3])
+            uss135 = bound_uss_data(data_list[4])
+            uss90 = bound_uss_data(data_list[5])
 
             l_bump = int(data_list[6])
             r_bump = int(data_list[7])
@@ -252,8 +295,10 @@ if __name__ == '__main__':
             x[2] = get_roc(avg_photo, photo_record, 0)
             x[3] = math.floor(((temp - 20.0) / 10.0) * 15.0)
             x[4] = get_roc(temp, temp_record, 1)
-            x[5] = get_echo_index(uss)
-            x[6] = get_bumper_state(l_bump, r_bump)
+            x[5] = get_echo_index(uss30)
+            x[6] = get_echo_index(uss90)
+            x[7] = get_echo_index(uss135)
+            x[8] = get_bumper_state(l_bump, r_bump)
 
             if print_mode:
 
@@ -261,36 +306,27 @@ if __name__ == '__main__':
 
                 print('light:           {}'.format(avg_photo))
                 print('temp:            {}'.format(temp))
-                print('obstacles:       {} cm'.format(uss))
+                print('obstacles:       {} cm at 30, {} cm at 90, {} cm at 135'.format(uss30, uss90, uss135))
                 print('collision:       {}\n'.format((l_bump | r_bump)))
 
                 print('feature:         {}'.format(x))
 
             # collect reward
-            r = get_reward(temp, bool(x[6]))
+            r = get_reward(temp, bool(x[8]))
             avg_r += r
 
             td_err = r
 
-            # generalize
+            # generalize and calculate partial td error
             for i in range(tile_num):
 
-                rand = np.random.randint(-1, 2)
-                gen_x_i[i, 0] = math.floor(bound_photo_data(l_photo + (photo_unit * rand)) / 511.50 * 15.0)
-                rand = np.random.randint(-1, 2)
-                gen_x_i[i, 1] = math.floor(bound_photo_data(r_photo + (photo_unit * rand)) / 511.50 * 15.0)
-                rand = np.random.randint(-1, 2)
-                gen_x_i[i, 2] = xp[2]
-                gen_x_i[i, 3] = math.floor(((bound_temp_data(temp + (temp_unit * rand)) - 20.0) / 10.0) * 15.0)
-                rand = np.random.randint(-1, 2)
-                gen_x_i[i, 4] = xp[4]
-                gen_x_i[i, 5] = get_echo_index(bound_uss_data(uss + (uss_unit * rand)))
-                gen_x_i[i, 6] = xp[6]
+                td_err -= w[i, gen_x_i[i, 0], gen_x_i[i, 1], gen_x_i[i, 2], gen_x_i[i, 3],
+                            gen_x_i[i, 4], gen_x_i[i, 5], gen_x_i[i, 6], gen_x_i[i, 7], gen_x_i[i, 8], a]
 
-                td_err -= w[i, gen_x_i[i, 0], gen_x_i[i, 1], gen_x_i[i, 2],
-                            gen_x_i[i, 3], gen_x_i[i, 4], gen_x_i[i, 5], gen_x_i[i, 6], a]
-                z[i, gen_x_i[i, 0], gen_x_i[i, 1], gen_x_i[i, 2],
-                  gen_x_i[i, 3], gen_x_i[i, 4], gen_x_i[i, 5], gen_x_i[i, 6], a] += 1
+                z[i, gen_x_i[i, 0], gen_x_i[i, 1], gen_x_i[i, 2], gen_x_i[i, 3],
+                  gen_x_i[i, 4], gen_x_i[i, 5], gen_x_i[i, 6], gen_x_i[i, 7], gen_x_i[i, 8], a] += 1
+
+                gen_x_i = generalize(gen_x_i, i, r_photo, r_photo, temp, uss30, uss90, uss135, x)
 
 
             # find action with the highest value for these features
@@ -299,8 +335,8 @@ if __name__ == '__main__':
                 q_x = np.zeros(action_num)
                 for i in range(tile_num):
                     for j in range(action_num):
-                        q_x[j] += w[i, gen_xp_i[i, 0], gen_xp_i[i, 1], gen_xp_i[i, 2],
-                                    gen_xp_i[i, 3], gen_xp_i[i, 4], gen_xp_i[i, 5], gen_xp_i[i, 6], j]
+                        q_x[j] += w[i, gen_x_i[i, 0], gen_x_i[i, 1], gen_x_i[i, 2], gen_x_i[i, 3],
+                                     gen_x_i[i, 4], gen_x_i[i, 5], gen_x_i[i, 6], gen_x_i[i, 7], gen_x_i[i, 8], j]
 
                 if print_mode: print('action-values:       {}'.format(np.around(q_x, decimals=2)))
 
@@ -313,11 +349,12 @@ if __name__ == '__main__':
                 if print_mode: print('explorative action:  {}'.format(action_dict.get(ap)))
 
             for i in range(tile_num):
-                td_err += gamma * w[i, gen_xp_i[i, 0], gen_xp_i[i, 1], gen_xp_i[i, 2],
-                                    gen_xp_i[i, 3], gen_xp_i[i, 4], gen_xp_i[i, 5], gen_xp_i[i, 6], ap]
+                td_err += gamma * w[i, gen_x_i[i, 0], gen_x_i[i, 1], gen_x_i[i, 2], gen_x_i[i, 3],
+                                    gen_x_i[i, 4], gen_x_i[i, 5], gen_x_i[i, 6], gen_x_i[i, 7], gen_x_i[i, 8], ap]
 
-            if print_mode: print('\n>> TD error >> {}'.format(td_err))
-            if print_mode: print('>> Reward >> {}\n'.format(r))
+            if print_mode:
+                print('\n>> TD error >> {}'.format(td_err))
+                print('>> Reward   >> {}\n'.format(r))
 
             # update weight vector for last time step
             w += alpha * td_err * z
@@ -346,5 +383,3 @@ if __name__ == '__main__':
             q = qp
             a = ap
             t += 1
-
-

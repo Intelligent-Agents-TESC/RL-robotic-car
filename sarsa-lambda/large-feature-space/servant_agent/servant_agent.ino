@@ -77,7 +77,13 @@ void setup() {
   
   /*init servo*/
   head.attach(SERVO_PIN); 
+  head.write(30);
+  delay(100);
+  head.write(125);
+  delay(100);
   head.write(90);
+
+  stop_motors();
 }
 
 void blink_internal_led() 
@@ -90,11 +96,11 @@ void blink_internal_led()
 
 void set_dir(bool _m_left, bool _m_right) {
 
-  bool m_l_upper = (_m_left) ? LOW : HIGH;
-  bool m_l_lower = (_m_left) ? HIGH : LOW;
+  bool m_l_upper = (_m_left) ? HIGH : LOW;
+  bool m_l_lower = (_m_left) ? LOW : HIGH;
 
-  bool m_r_upper = (_m_right) ? LOW : HIGH;
-  bool m_r_lower = (_m_right) ? HIGH : LOW;
+  bool m_r_upper = (_m_right) ? HIGH : LOW;
+  bool m_r_lower = (_m_right) ? LOW : HIGH;
 
   digitalWrite(A0_IN, m_l_upper);
   digitalWrite(A1_IN, m_l_lower);
@@ -222,7 +228,7 @@ float watch()
 float get_echo_boolean_at_angle(int _angle)
 {
   head.write(_angle);
-  delay(50);
+  delay(100);
   float echo_d = watch();
   return echo_d;
 }
@@ -251,11 +257,11 @@ void take_action(int _a)
 }
 
 void loop() {
-  
+
   // put your main code here, to run repeatedly:
   float l_photo = get_photo_data(l_PHOTO_PIN);
   float r_photo = get_photo_data(r_PHOTO_PIN);
-  
+
   stop_motors();
   
   float temp = get_temp();
@@ -265,18 +271,20 @@ void loop() {
   float l_bump = (float) get_bump_signal(l_SWITCH_PIN);
   float r_bump = (float) get_bump_signal(r_SWITCH_PIN);
   
-  float data[] = {l_photo, r_photo, temp, watch35, watch135, watch90, l_bump, r_bump};
+  float data[] = {l_photo, r_photo, temp};
   String data_string = "";
   
-  for (int i = 0; i < 8; i++)
+  for (int i = 0; i < 3; i++)
   {
     data_string += String(data[i]);
     data_string += " ";
   }
   data_string += "\n";
+
+  delay(500);
   
   Serial.println(data_string);
-  
+
   while (!Serial.available())
   {
     ;  
