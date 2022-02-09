@@ -115,8 +115,8 @@ void set_speed(int _l_speed, int _r_speed) {
   {
     for (int i = 0; i <= _r_speed; i++) 
     {
-        analogWrite(A_ENABLE, i + 7);
-        analogWrite(B_ENABLE, i);  // right wheel needs more power to start
+        analogWrite(A_ENABLE, i);
+        analogWrite(B_ENABLE, i);  
         delay(8);
     }
   } else 
@@ -131,7 +131,7 @@ void set_speed(int _l_speed, int _r_speed) {
       {
         if (faster_motor) // right speed is faster
         {
-          analogWrite(A_ENABLE, i + 7);
+          analogWrite(A_ENABLE, i);
         } else {          // left speed is faster
           analogWrite(B_ENABLE, i);
         }
@@ -160,8 +160,8 @@ void stop_motors()
 void turn_90(bool _r)
 {
   set_dir(_r, (1 - _r));
-  int l_speed = _r ? 153: 156;
-  int r_speed = _r ? 156: 153;
+  int l_speed = _r ? 165: 165;
+  int r_speed = _r ? 165: 165;
   set_speed(l_speed, r_speed);
   delay(100); 
 }
@@ -169,13 +169,13 @@ void turn_90(bool _r)
 void forward()
 {
   set_dir(1, 1);
-  set_speed(155, 155);
+  set_speed(178, 178);
 }
 
 void backward()
 {
   set_dir(0, 0);
-  set_speed(158, 158);
+  set_speed(185, 185);
 }
 
 /* PHOTOTRANSISTOR ---------------------------------------------------------------------------------------  */
@@ -228,7 +228,7 @@ float watch()
 float get_echo_boolean_at_angle(int _angle)
 {
   head.write(_angle);
-  delay(100);
+  delay(200);
   float echo_d = watch();
   return echo_d;
 }
@@ -245,11 +245,9 @@ void take_action(int _a)
       break;  
     case 2: // go left 
       turn_90(0);
-      forward();
       break;
     case 3: // go right 
       turn_90(1);
-      forward();
       break;
     case 4: // do nothing
       break; 
@@ -265,23 +263,23 @@ void loop() {
   stop_motors();
   
   float temp = get_temp();
-  float watch35 = get_echo_boolean_at_angle(35);
-  float watch135 = get_echo_boolean_at_angle(135);
+  float watch35 = get_echo_boolean_at_angle(40);
+  float watch135 = get_echo_boolean_at_angle(145);
   float watch90 = get_echo_boolean_at_angle(90);
   float l_bump = (float) get_bump_signal(l_SWITCH_PIN);
   float r_bump = (float) get_bump_signal(r_SWITCH_PIN);
   
-  float data[] = {l_photo, r_photo, temp};
+  float data[] = {l_photo, r_photo, temp, watch35, watch135, watch90, l_bump, r_bump};
   String data_string = "";
   
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; i < 8; i++)
   {
     data_string += String(data[i]);
     data_string += " ";
   }
   data_string += "\n";
 
-  delay(500);
+  delay(50);
   
   Serial.println(data_string);
 
