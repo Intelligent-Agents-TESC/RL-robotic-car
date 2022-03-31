@@ -78,10 +78,11 @@ void setup() {
   /*init servo*/
   head.attach(SERVO_PIN); 
   head.write(30);
-  delay(100);
+  delay(200);
   head.write(125);
-  delay(100);
+  delay(200);
   head.write(90);
+  delay(200);
 
   stop_motors();
 }
